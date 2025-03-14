@@ -70,4 +70,5 @@ class Score(db.Model):
     total_questions = db.Column(db.Integer)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    
+
+#models
