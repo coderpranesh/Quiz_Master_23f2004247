@@ -94,6 +94,74 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    if current_user.is_admin:
+        return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('user_dashboard'))
+
+
+@app.route('/admin/dashboard')
+@login_required
+def admin_dashboard():
+    if not current_user.is_admin:
+        return redirect(url_for('user_dashboard'))
+    
+    search_query = request.args.get('search', '')
+    
+    # Query users with their scores
+    users_query = User.query.filter(or_(
+        User.username.ilike(f'%{search_query}%'),
+        User.full_name.ilike(f'%{search_query}%')
+    ))
+    
+    user_scores = []
+    for user in users_query.all():
+        # Get scores ordered by latest first
+        scores = Score.query.filter_by(user_id=user.id)\
+            .order_by(Score.timestamp.desc())\
+            .all()
+        
+        # Calculate scores
+        latest_score = None
+        average_score = None
+        
+        if scores:
+            # Calculate latest score percentage
+            latest = scores[0]
+            latest_score = (latest.score / latest.total_questions) * 100
+            
+            # Calculate average score
+            total_percentage = sum(
+                (s.score / s.total_questions) * 100 
+                for s in scores
+                if s.total_questions > 0  # Prevent division by zero
+            )
+            average_score = total_percentage / len(scores)
+        
+        user_scores.append({
+            'user': user,
+            'scores': scores,
+            'latest_score': latest_score,
+            'average_score': average_score
+        })
+    
+    # Statistics
+    stats = {
+        'users': User.query.count(),
+        'subjects': Subject.query.count(),
+        'quizzes': Quiz.query.count(),
+        'questions': Question.query.count()
+    }
+    
+    return render_template('admin/dashboard.html',
+                         stats=stats,
+                         user_scores=user_scores,
+                         search_query=search_query)
+
+
+
 
 
 if __name__ == '__main__':

@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Admin Dashboard</h2>
+    
+    <!-- Search Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('admin_dashboard') }}">
+                <div class="input-group">
+                    <input type="text" class="form-control" 
+                           name="search" 
+                           placeholder="Search users by name or email..."
+                           value="{{ search_query }}">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Users</h5>
+                    <h2 class="card-text">{{ stats.users }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Subjects</h5>
+                    <h2 class="card-text">{{ stats.subjects }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Active Quizzes</h5>
+                    <h2 class="card-text">{{ stats.quizzes }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5 class="card-title">Total Questions</h5>
+                    <h2 class="card-text">{{ stats.questions }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Scores Section -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">User Performance Overview</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Quizzes Taken</th>
+                            <th>Latest Score</th>
+                            <th>Average Score</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in user_scores %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('view_user', user_id=data.user.id) }}">
+                                    {{ data.user.full_name }}
+                                </a>
+                            </td>
+                            <td>{{ data.user.username }}</td>
+                            <td>{{ data.scores|length }}</td>
+                            <td>
+                                {% if data.latest_score %}
+                                    {{ data.latest_score|round(1) }}%
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if data.average_score %}
+                                    {{ data.average_score|round(1) }}%
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#scores-{{ data.user.id }}">
+                                    <i class="bi bi-chevron-down"></i> Details
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="collapse" id="scores-{{ data.user.id }}">
+                            <td colspan="6">
+                                <div class="ps-4">
+                                    <h6 class="mb-3">Detailed Attempt History:</h6>
+                                    {% if data.scores %}
+                                    <table class="table table-sm table-striped">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>Quiz Title</th>
+                                                <th>Score</th>
+                                                <th>Date Attempted</th>
+                                                <th>Percentage</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for score in data.scores %}
+                                            <tr>
+                                                <td>{{ score.quiz.title if score.quiz else 'Deleted Quiz' }}</td>
+                                                <td>{{ score.score }}/{{ score.total_questions }}</td>
+                                                <td>{{ score.timestamp|datetimeformat('%Y-%m-%d %H:%M') }}</td>
+                                                <td>{{ (score.score / score.total_questions * 100)|round(1) }}%</td>
+                                                <td>
+                                                    <form method="POST" action="{{ url_for('admin_delete_score', score_id=score.id) }}">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                        <button type="submit" 
+                                                                class="btn btn-danger btn-sm" 
+                                                                title="Delete Attempt"
+                                                                onclick="return confirm('Permanently delete this attempt?')">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                    {% else %}
+                                    <div class="alert alert-info mb-0">
+                                        No quiz attempts recorded for this user
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
