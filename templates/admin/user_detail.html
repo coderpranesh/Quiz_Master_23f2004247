@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}User Details - {{ user.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <!-- Correct Usage -->
+        <h2>{{ user.full_name }}'s Profile</h2>
+        <p>Email: {{ user.username }}</p>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- User Information Card -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Personal Information</h5>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Full Name</dt>
+                <dd class="col-sm-9">{{ user.full_name }}</dd>
+
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">{{ user.username }}</dd>
+
+                <dt class="col-sm-3">Registration Date</dt>
+                <dd class="col-sm-9">{{ user.created_at|datetimeformat }}</dd>
+
+                <dt class="col-sm-3">Date of Birth</dt>
+                <dd class="col-sm-9">
+                    {% if user.dob %}
+                        {{ user.dob.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        Not provided
+                    {% endif %}
+                </dd>
+
+                <dt class="col-sm-3">Qualification</dt>
+                <dd class="col-sm-9">
+                    {{ user.qualification or 'Not provided' }}
+                </dd>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Quiz Attempts Card -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Quiz Attempt History</h5>
+        </div>
+        <div class="card-body">
+            {% if scores %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Quiz</th>
+                            <th>Score</th>
+                            <th>Date Attempted</th>
+                            <th>Percentage</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for score in scores %}
+                        <tr>
+                            <td>{{ score.quiz.title if score.quiz else 'Deleted Quiz' }}</td>
+                            <td>{{ score.score }}/{{ score.total_questions }}</td>
+                            <td>{{ score.timestamp|datetimeformat }}</td>
+                            <td>{{ (score.score / score.total_questions * 100)|round(1) }}%</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin_delete_score', score_id=score.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-danger btn-sm" 
+                                            onclick="return confirm('Delete this attempt?')" 
+                                            title="Delete this quiz attempt">
+                                        <i class="bi bi-trash"></i> 
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                
+                No quiz attempts recorded for this user
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Delete User Button -->
+    {% if user != current_user %}
+    <div class="mt-4">
+        <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger" 
+                    onclick="return confirm('Permanently delete this user and all their data?')">
+                <i class="bi bi-person-x"></i> Delete User Account
+            </button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

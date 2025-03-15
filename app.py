@@ -7,6 +7,7 @@ from models import db, User, Subject, Chapter, Quiz, Question, Score
 from forms import LoginForm, RegistrationForm, SubjectForm, ChapterForm, QuizForm, QuestionForm
 from datetime import datetime, timedelta
 import math
+from sqlalchemy import or_
 
 
 app = Flask(__name__)
@@ -59,7 +60,7 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return "success"
+        return redirect(url_for('dashboard'))
     
     form = LoginForm()
     if form.validate_on_submit():
@@ -100,6 +101,25 @@ def dashboard():
     if current_user.is_admin:
         return redirect(url_for('admin_dashboard'))
     return redirect(url_for('user_dashboard'))
+
+
+@app.route('/admin/delete-score/<int:score_id>', methods=['POST'])
+@login_required
+def admin_delete_score(score_id):
+    if not current_user.is_admin:
+        abort(403)
+    
+    score = Score.query.get_or_404(score_id)
+    
+    try:
+        db.session.delete(score)
+        db.session.commit()
+        flash('Quiz attempt deleted successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting quiz attempt: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_dashboard'))
 
 
 @app.route('/admin/dashboard')
@@ -160,6 +180,224 @@ def admin_dashboard():
                          user_scores=user_scores,
                          search_query=search_query)
 
+
+@app.route('/admin/users/<int:user_id>')
+@login_required
+def view_user(user_id):
+    if not current_user.is_admin:
+        abort(403)
+    
+    user = User.query.get_or_404(user_id)  # Get user from database
+    return render_template('admin/user_detail.html', user=user)  # Pass to template
+
+
+@app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if not current_user.is_admin:
+        abort(403)
+    
+    user = User.query.get_or_404(user_id)
+    
+    try:
+        # Delete user and all related scores
+        db.session.delete(user)
+        db.session.commit()
+        flash(f'User {user.username} deleted successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting user: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_dashboard'))
+
+
+# Admin Routes
+# @app.route('/admin/dashboard')
+# @login_required
+# def admin_dashboard():
+#     if not current_user.is_admin:
+#         return redirect(url_for('user_dashboard'))
+    
+#     stats = {
+#         'users': User.query.count(),
+#         'subjects': Subject.query.count(),
+#         'quizzes': Quiz.query.count(),
+#         'questions': Question.query.count()
+#     }
+#     return render_template('admin/dashboard.html', stats=stats)
+
+@app.route('/admin/subjects', methods=['GET', 'POST'])
+@login_required
+def manage_subjects():
+    if not current_user.is_admin:
+        return redirect(url_for('user_dashboard'))
+    
+    form = SubjectForm()
+    if form.validate_on_submit():
+        subject = Subject(name=form.name.data, description=form.description.data)
+        db.session.add(subject)
+        db.session.commit()
+        flash('Subject created successfully!', 'success')
+        return redirect(url_for('manage_subjects'))
+    
+    subjects = Subject.query.all()
+    return render_template('admin/manage_subjects.html', form=form, subjects=subjects)
+
+@app.route('/admin/chapters', methods=['GET', 'POST'])
+@login_required
+def manage_chapters():
+    if not current_user.is_admin:
+        return redirect(url_for('user_dashboard'))
+    
+    form = ChapterForm()
+    form.subject.choices = [(s.id, s.name) for s in Subject.query.all()]
+    
+    if form.validate_on_submit():
+        chapter = Chapter(
+            name=form.name.data,
+            description=form.description.data,
+            subject_id=form.subject.data
+        )
+        db.session.add(chapter)
+        db.session.commit()
+        flash('Chapter created successfully!', 'success')
+        return redirect(url_for('manage_chapters'))
+    
+    chapters = Chapter.query.all()
+    return render_template('admin/manage_chapters.html', form=form, chapters=chapters)
+
+@app.route('/admin/quizzes', methods=['GET', 'POST'])
+@login_required
+def manage_quizzes():
+    if not current_user.is_admin:
+        return redirect(url_for('user_dashboard'))
+    
+    form = QuizForm()
+    form.chapter.choices = [(c.id, f"{c.subject.name} - {c.name}") for c in Chapter.query.join(Subject).all()]
+    
+    if form.validate_on_submit():
+        quiz = Quiz(
+            title=form.title.data,
+            chapter_id=form.chapter.data,
+            duration=form.duration.data
+        )
+        db.session.add(quiz)
+        db.session.commit()
+        flash('Quiz created successfully!', 'success')
+        return redirect(url_for('manage_quizzes'))
+    
+    quizzes = Quiz.query.all()
+    return render_template('admin/manage_quizzes.html', form=form, quizzes=quizzes)
+
+@app.route('/admin/questions/<int:quiz_id>', methods=['GET', 'POST'])
+@login_required
+def manage_questions(quiz_id):
+    if not current_user.is_admin:
+        return redirect(url_for('user_dashboard'))
+    
+    quiz = Quiz.query.get_or_404(quiz_id)
+    form = QuestionForm()
+    
+    if form.validate_on_submit():
+        question = Question(
+            text=form.text.data,
+            option1=form.option1.data,
+            option2=form.option2.data,
+            option3=form.option3.data,
+            option4=form.option4.data,
+            correct_option=form.correct_option.data,
+            quiz_id=quiz_id
+        )
+        db.session.add(question)
+        db.session.commit()
+        flash('Question added successfully!', 'success')
+        return redirect(url_for('manage_questions', quiz_id=quiz_id))
+    
+    questions = quiz.questions
+    return render_template('admin/manage_questions.html', form=form, quiz=quiz, questions=questions)
+
+
+@app.route('/admin/quizzes/delete/<int:quiz_id>')
+@login_required
+def delete_quiz(quiz_id):
+    if not current_user.is_admin:
+        abort(403)
+    quiz = Quiz.query.get_or_404(quiz_id)
+    db.session.delete(quiz)
+    db.session.commit()
+    flash('Quiz deleted successfully', 'success')
+    return redirect(url_for('manage_quizzes'))
+
+
+
+@app.route('/admin/chapters/delete/<int:chapter_id>')
+@login_required
+def delete_chapter(chapter_id):
+    if not current_user.is_admin:
+        abort(403)
+    chapter = Chapter.query.get_or_404(chapter_id)
+    db.session.delete(chapter)
+    db.session.commit()
+    flash('Chapter deleted successfully', 'success')
+    return redirect(url_for('manage_chapters'))
+
+
+@app.route('/admin/subjects/delete/<int:subject_id>')
+@login_required
+def delete_subject(subject_id):
+    if not current_user.is_admin:
+        abort(403)
+    subject = Subject.query.get_or_404(subject_id)
+    db.session.delete(subject)
+    db.session.commit()
+    flash('Subject deleted successfully', 'success')
+    return redirect(url_for('manage_subjects'))
+
+# @app.route('/admin/subjects/edit/<int:quiz_id>', methods=['POST'])
+# @login_required
+# def edit_subject(quiz_id):
+#     if not current_user.is_admin:
+#         abort(403)
+#     quiz = Subject.query.get_or_404(quiz_id)
+#     quiz.name =request.form['name']
+#     quiz.description = request.form['description']
+#     db.session.commit()
+#     flash('Subject updated successfully', 'success')
+#     return redirect(url_for('manage_quizzes')) 
+
+# @app.route('/admin/subjects/edit/<int:subject_id>', methods=['POST'])
+# @login_required
+# def edit_subject(subject_id):
+#     if not current_user.is_admin:
+#         abort(403)
+#     subject = Subject.query.get_or_404(subject_id)
+#     subject.name = request.form['name']
+#     subject.description = request.form['description']
+#     db.session.commit()
+#     flash('Subject updated successfully', 'success')
+#     return redirect(url_for('manage_subjects'))
+
+
+@app.route('/admin/subjects/edit/<int:subject_id>', methods=['POST'])
+@login_required
+def edit_subject(subject_id):
+    if not current_user.is_admin:
+        abort(403)
+    
+    subject = Subject.query.get_or_404(subject_id)
+    
+    try:
+        subject.name = request.form['name']
+        subject.description = request.form['description']
+        db.session.commit()
+        flash('Subject updated successfully', 'success')
+    except KeyError:
+        flash('Invalid form submission', 'danger')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating subject: {str(e)}', 'danger')
+    
+    return redirect(url_for('manage_subjects'))
 
 
 

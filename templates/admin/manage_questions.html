@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Manage Questions{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Manage Questions - {{ quiz.title }}</h2>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Add New Question</h5>
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.text.label(class="form-label") }}
+                            {{ form.text(class="form-control", rows=3) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.option1.label(class="form-label") }}
+                            {{ form.option1(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.option2.label(class="form-label") }}
+                            {{ form.option2(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.option3.label(class="form-label") }}
+                            {{ form.option3(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.option4.label(class="form-label") }}
+                            {{ form.option4(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.correct_option.label(class="form-label") }}
+                            {{ form.correct_option(class="form-select") }}
+                        </div>
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Existing Questions</h5>
+                    <div class="accordion" id="questionsAccordion">
+                        {% for question in questions %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#q{{ question.id }}">
+                                    Question #{{ loop.index }}
+                                </button>
+                            </h2>
+                            <div id="q{{ question.id }}" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <p>{{ question.text }}</p>
+                                    <ol>
+                                        <li class="{{ 'text-success fw-bold' if question.correct_option == 1 }}">
+                                            {{ question.option1 }}
+                                        </li>
+                                        <li class="{{ 'text-success fw-bold' if question.correct_option == 2 }}">
+                                            {{ question.option2 }}
+                                        </li>
+                                        {% if question.option3 %}
+                                        <li class="{{ 'text-success fw-bold' if question.correct_option == 3 }}">
+                                            {{ question.option3 }}
+                                        </li>
+                                        {% endif %}
+                                        {% if question.option4 %}
+                                        <li class="{{ 'text-success fw-bold' if question.correct_option == 4 }}">
+                                            {{ question.option4 }}
+                                        </li>
+                                        {% endif %}
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
