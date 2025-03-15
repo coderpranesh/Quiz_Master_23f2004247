@@ -44,7 +44,7 @@ class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'))
-    duration = db.Column(db.Integer)  # in minutes
+    duration = db.Column(db.Integer)  
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     questions = db.relationship('Question', backref='quiz', lazy=True)
     scores = db.relationship('Score', backref='quiz', lazy=True)
@@ -71,4 +71,3 @@ class Score(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-#models
