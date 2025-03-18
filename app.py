@@ -11,6 +11,7 @@ from sqlalchemy import or_
 
 
 app = Flask(__name__)
+# app.jinja_env.filters['datetimeformat'] = datetimeformat
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///quiz.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -129,6 +130,7 @@ def admin_dashboard():
     
     search_query = request.args.get('search', '')
     
+    # Query users with their scores
     users_query = User.query.filter(or_(
         User.username.ilike(f'%{search_query}%'),
         User.full_name.ilike(f'%{search_query}%')
@@ -136,25 +138,25 @@ def admin_dashboard():
     
     user_scores = []
     for user in users_query.all():
-        
+        # Get scores ordered by latest first
         scores = Score.query.filter_by(user_id=user.id)\
             .order_by(Score.timestamp.desc())\
             .all()
         
-        
+        # Calculate scores
         latest_score = None
         average_score = None
         
         if scores:
-            
+            # Calculate latest score percentage
             latest = scores[0]
             latest_score = (latest.score / latest.total_questions) * 100
             
-            
+            # Calculate average score
             total_percentage = sum(
                 (s.score / s.total_questions) * 100 
                 for s in scores
-                if s.total_questions > 0  
+                if s.total_questions > 0  # Prevent division by zero
             )
             average_score = total_percentage / len(scores)
         
@@ -165,6 +167,7 @@ def admin_dashboard():
             'average_score': average_score
         })
     
+    # Statistics
     stats = {
         'users': User.query.count(),
         'subjects': Subject.query.count(),
@@ -184,8 +187,8 @@ def view_user(user_id):
     if not current_user.is_admin:
         abort(403)
     
-    user = User.query.get_or_404(user_id)  
-    return render_template('admin/user_detail.html', user=user)  
+    user = User.query.get_or_404(user_id)  # Get user from database
+    return render_template('admin/user_detail.html', user=user)  # Pass to template
 
 
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
@@ -197,6 +200,7 @@ def delete_user(user_id):
     user = User.query.get_or_404(user_id)
     
     try:
+        # Delete user and all related scores
         db.session.delete(user)
         db.session.commit()
         flash(f'User {user.username} deleted successfully', 'success')
@@ -207,6 +211,20 @@ def delete_user(user_id):
     return redirect(url_for('admin_dashboard'))
 
 
+# Admin Routes
+# @app.route('/admin/dashboard')
+# @login_required
+# def admin_dashboard():
+#     if not current_user.is_admin:
+#         return redirect(url_for('user_dashboard'))
+    
+#     stats = {
+#         'users': User.query.count(),
+#         'subjects': Subject.query.count(),
+#         'quizzes': Quiz.query.count(),
+#         'questions': Question.query.count()
+#     }
+#     return render_template('admin/dashboard.html', stats=stats)
 
 @app.route('/admin/subjects', methods=['GET', 'POST'])
 @login_required
@@ -335,6 +353,30 @@ def delete_subject(subject_id):
     flash('Subject deleted successfully', 'success')
     return redirect(url_for('manage_subjects'))
 
+# @app.route('/admin/subjects/edit/<int:quiz_id>', methods=['POST'])
+# @login_required
+# def edit_subject(quiz_id):
+#     if not current_user.is_admin:
+#         abort(403)
+#     quiz = Subject.query.get_or_404(quiz_id)
+#     quiz.name =request.form['name']
+#     quiz.description = request.form['description']
+#     db.session.commit()
+#     flash('Subject updated successfully', 'success')
+#     return redirect(url_for('manage_quizzes')) 
+
+# @app.route('/admin/subjects/edit/<int:subject_id>', methods=['POST'])
+# @login_required
+# def edit_subject(subject_id):
+#     if not current_user.is_admin:
+#         abort(403)
+#     subject = Subject.query.get_or_404(subject_id)
+#     subject.name = request.form['name']
+#     subject.description = request.form['description']
+#     db.session.commit()
+#     flash('Subject updated successfully', 'success')
+#     return redirect(url_for('manage_subjects'))
+
 
 @app.route('/admin/subjects/edit/<int:subject_id>', methods=['POST'])
 @login_required
@@ -357,6 +399,10 @@ def edit_subject(subject_id):
     
     return redirect(url_for('manage_subjects'))
 
+
+
+
+# User Routes
 @app.route('/user/dashboard')
 @login_required
 def user_dashboard():
@@ -367,6 +413,58 @@ def user_dashboard():
     return render_template('user/dashboard.html', quizzes=quizzes)
 
 
+@app.route('/user/quiz/<int:quiz_id>', methods=['GET', 'POST'])
+@login_required
+def take_quiz(quiz_id):
+    if current_user.is_admin:
+        return redirect(url_for('admin_dashboard'))
+    
+    quiz = Quiz.query.get_or_404(quiz_id)
+    questions = quiz.questions
+    
+    if request.method == 'POST':
+        score = 0
+        total = len(questions)
+        for question in questions:
+            answer = request.form.get(f'question_{question.id}')
+            if answer and int(answer) == question.correct_option:
+                score += 1
+        
+        # Save score
+        new_score = Score(
+            user_id=current_user.id,
+            quiz_id=quiz_id,
+            score=score,
+            total_questions=total
+        )
+        db.session.add(new_score)
+        db.session.commit()
+        
+        return redirect(url_for('quiz_results', score_id=new_score.id))
+    
+    return render_template('user/quiz.html', quiz=quiz, questions=questions)
+
+
+
+
+@app.route('/user/scores')
+@login_required
+def quiz_results():
+    if current_user.is_admin:
+        return redirect(url_for('admin_dashboard'))
+    
+    scores = Score.query.filter_by(user_id=current_user.id).order_by(Score.timestamp.desc()).all()
+    return render_template('user/scores.html', scores=scores)
+
+
+@app.cli.command('reset-db')
+def reset_db():
+    """Delete existing data and create new tables"""
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+    print("Database reset successfully!")
+
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5003)
+    app.run(debug=True, port=5001)
