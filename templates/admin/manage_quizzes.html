@@ -65,6 +65,15 @@
                                             </a>
                                         </div>
                                     </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </a>
+                                            <!-- Existing delete button -->
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

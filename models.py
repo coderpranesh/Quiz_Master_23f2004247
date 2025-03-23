@@ -48,6 +48,7 @@ class Quiz(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     questions = db.relationship('Question', backref='quiz', lazy=True)
     scores = db.relationship('Score', backref='quiz', lazy=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class Question(db.Model):

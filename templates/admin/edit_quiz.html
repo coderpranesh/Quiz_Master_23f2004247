@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Edit Quiz - {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Edit Quiz: {{ quiz.title }}</h2>
+        <a href="{{ url_for('manage_quizzes') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Quizzes
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control") }}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.chapter.label(class="form-label") }}
+                    {{ form.chapter(class="form-select") }}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.duration.label(class="form-label") }}
+                    <div class="input-group">
+                        {{ form.duration(class="form-control") }}
+                        <span class="input-group-text">minutes</span>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Existing Questions Section -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Manage Questions</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-end mb-3">
+                <a href="{{ url_for('manage_questions', quiz_id=quiz.id) }}" 
+                   class="btn btn-success">
+                    <i class="bi bi-plus-lg"></i> Add New Question
+                </a>
+            </div>
+            
+            {% if quiz.questions %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Question</th>
+                            <th>Options</th>
+                            <th>Correct Answer</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for question in quiz.questions %}
+                        <tr>
+                            <td>{{ question.text|truncate(50) }}</td>
+                            <td>
+                                <ol>
+                                    <li>{{ question.option1 }}</li>
+                                    <li>{{ question.option2 }}</li>
+                                    {% if question.option3 %}<li>{{ question.option3 }}</li>{% endif %}
+                                    {% if question.option4 %}<li>{{ question.option4 }}</li>{% endif %}
+                                </ol>
+                            </td>
+                            <td>Option {{ question.correct_option }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('edit_question', question_id=question.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="POST" 
+                                          action="{{ url_for('edit_question', question_id=question.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Delete this question?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                No questions found for this quiz
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

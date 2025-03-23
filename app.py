@@ -317,6 +317,30 @@ def manage_questions(quiz_id):
     return render_template('admin/manage_questions.html', form=form, quiz=quiz, questions=questions)
 
 
+@app.route('/admin/questions/edit/<int:question_id>', methods=['GET', 'POST'])
+@login_required
+def edit_question(question_id):
+    if not current_user.is_admin:
+        abort(403)
+    
+    question = Question.query.get_or_404(question_id)
+    form = QuestionForm(obj=question)
+    
+    if form.validate_on_submit():
+        try:
+            form.populate_obj(question)
+            db.session.commit()
+            flash('Question updated successfully!', 'success')
+            return redirect(url_for('edit_quiz', quiz_id=question.quiz_id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating question: {str(e)}', 'danger')
+    
+    return render_template('admin/edit_question.html', 
+                         form=form, 
+                         question=question)
+
+
 @app.route('/admin/quizzes/delete/<int:quiz_id>')
 @login_required
 def delete_quiz(quiz_id):
@@ -328,6 +352,33 @@ def delete_quiz(quiz_id):
     flash('Quiz deleted successfully', 'success')
     return redirect(url_for('manage_quizzes'))
 
+
+@app.route('/admin/quizzes/edit/<int:quiz_id>', methods=['GET', 'POST'])
+@login_required
+def edit_quiz(quiz_id):
+    if not current_user.is_admin:
+        abort(403)
+    
+    quiz = Quiz.query.get_or_404(quiz_id)
+    form = QuizForm(obj=quiz)
+    
+    # Populate chapter choices
+    form.chapter.choices = [(c.id, f"{c.subject.name} - {c.name}") 
+                          for c in Chapter.query.join(Subject).all()]
+    
+    if form.validate_on_submit():
+        try:
+            form.populate_obj(quiz)
+            db.session.commit()
+            flash('Quiz updated successfully!', 'success')
+            return redirect(url_for('manage_quizzes'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating quiz: {str(e)}', 'danger')
+    
+    return render_template('admin/edit_quiz.html', 
+                         form=form, 
+                         quiz=quiz)
 
 
 @app.route('/admin/chapters/delete/<int:chapter_id>')
