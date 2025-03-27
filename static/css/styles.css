@@ -1,0 +1,109 @@
+/* .html, body {
+    min-height: 1000px;
+    background-color: #2c3e50;
+    color:#eee;
+}
+
+.text-muted {
+    color: #aaa !important;
+}
+
+.card-body{
+    padding: 50px; ;
+    background-color: #263646 !important;
+    color: #eee ;
+    border-radius: 20px;
+    box-shadow: 0 0 5px rgb(255, 255, 255);
+}
+
+
+.card{
+    background-color: #263646 !important;
+    color: #eee ;
+    border-radius: 20px;
+    box-shadow: 0 0 8px rgb(54, 55, 57);
+}
+.quiz-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+}
+
+.quiz-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.175);
+}
+
+.list-group-item {
+    transition: background-color 0.2s;
+}
+
+.badge.bg-primary {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+}
+
+.quiz-meta div {
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.quiz-meta div:last-child {
+    border-bottom: none;
+}
+
+.table-hover tbody tr {
+    cursor: pointer;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: rgba(52, 152, 219, 0.1);
+    color: #2c3e50;
+}
+
+.accordion-button:focus {
+    box-shadow: none;
+}
+
+
+.nav-link-custom {
+    font-weight: 500;
+    transition: color 0.3s ease-in-out;
+}
+.nav-link-custom:hover {
+    color: #00bfff !important; 
+}
+.btn-outline-light:hover {
+    background-color: #fff !important;
+    color: #000 !important;
+}
+
+.btn-danger {
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 8px rgba(220, 53, 69, 0.3);
+}
+
+.user_type{
+    color: #0310ff;
+    text-decoration: none;
+}
+
+.user_type:hover{
+    transform: translateY(-50px);
+    color: #f91313;
+}
+
+.box{
+    background-color: #b1abab !important;
+    color: #fffcfc ;
+    border-radius: 0px;
+    box-shadow: 0 0 8px rgb(16, 95, 253);
+}
+
+.table-responsive {
+    border-radius: 10px;
+    box-shadow: 0 0 4px rgb(16, 95, 253);
+} */

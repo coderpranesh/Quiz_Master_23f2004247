@@ -5,71 +5,182 @@
 <div class="container-fluid">
     <h2 class="mb-4">Manage Chapters</h2>
     
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Add New Chapter</h5>
-                    <form method="POST">
-                        {{ form.hidden_tag() }}
-                        <div class="mb-3">
-                            {{ form.name.label(class="form-label") }}
-                            {{ form.name(class="form-control") }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.description.label(class="form-label") }}
-                            {{ form.description(class="form-control", rows=3) }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.subject.label(class="form-label") }}
-                            {{ form.subject(class="form-select") }}
-                        </div>
-                        <div class="d-grid">
-                            {{ form.submit(class="btn btn-primary") }}
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Existing Chapters</h5>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Subject</th>
-                                    <th>Description</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for chapter in chapters %}
-                                <tr>
-                                    <td>{{ chapter.name }}</td>
-                                    <td>{{ chapter.subject.name }}</td>
-                                    <td>{{ chapter.description|truncate(30) }}</td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
-                                            <a href="{{ url_for('delete_chapter', chapter_id=chapter.id) }}" 
-                                            class="btn btn-sm btn-outline-danger"
-                                            onclick="return confirm('Are you sure?')">
-                                             Delete
-                                         </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <form method="GET" class="w-50 me-3">
+                    <div class="input-group">
+                        <input type="text" 
+                               class="form-control form-control-lg" 
+                               name="search" 
+                               placeholder="Search chapters..."
+                               value="{{ search_query }}">
+                        <button class="btn btn-primary" type="submit" title="Search">
+                            <i class="bi bi-search"></i>
+                        </button>
                     </div>
-                </div>
+                </form>
+                <button class="btn btn-success btn-lg" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#newChapterModal">
+                    <i class="bi bi-plus-circle"></i> New Chapter
+                </button>
             </div>
         </div>
     </div>
+
+
+    <div class="card shadow">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Chapter Name</th>
+                            <th>Subject</th>
+                            <th>Description</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for chapter in chapters %}
+                        <tr>
+                            <td class="fw-bold">{{ chapter.name }}</td>
+                            <td>
+                                <span class="badge bg-primary">
+                                    {{ chapter.subject.name }}
+                                </span>
+                            </td>
+                            <td class="text-muted truncated-text">
+                                {{ chapter.description|truncate(80) }}
+                            </td>
+                            <td class="text-nowrap">
+                                {{ chapter.created_at|datetimeformat('%b %d, %Y') }}
+                            </td>
+                            <td class="text-nowrap">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editChapterModal{{ chapter.id }}">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </button>
+                                    <form method="POST" 
+                                          action="{{ url_for('delete_chapter', chapter_id=chapter.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" 
+                                                class="btn btn-sm btn-outline-danger"
+                                                title="Delete Chapter"
+                                                onclick="return confirm('Delete this chapter and all related quizzes?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="newChapterModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Chapter</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" title="Close"></button>
+                </div>
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.name.label(class="form-label") }}
+                                    {{ form.name(class="form-control form-control-lg") }}
+                                </div>
+                                <div class="mb-3">
+                                    {{ form.subject.label(class="form-label") }}
+                                    {{ form.subject(class="form-select form-select-lg") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.description.label(class="form-label") }}
+                                    {{ form.description(class="form-control", rows=5) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Create Chapter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    {% for chapter in chapters %}
+    <div class="modal fade" id="editChapterModal{{ chapter.id }}" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Chapter</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" title="Close"></button>
+                </div>
+                <form method="POST" action="{{ url_for('edit_chapter', chapter_id=chapter.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Chapter Name</label>
+                                    <input type="text" 
+                                           class="form-control form-control-lg" 
+                                           name="name" 
+                                           value="{{ chapter.name }}" 
+                                           placeholder="Enter chapter name" 
+                                           title="Chapter Name" 
+                                           required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Subject</label>
+                                    <select class="form-select form-select-lg" name="subject_id" title="Select Subject">
+                                        {% for subject in form.subject.choices %}
+                                        <option value="{{ subject[0] }}" 
+                                                {% if subject[0] == chapter.subject_id %}selected{% endif %}>
+                                            {{ subject[1] }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Description</label>
+                                    <textarea class="form-control" 
+                                              name="description" 
+                                              rows="5" 
+                                              title="Enter chapter description" 
+                                              placeholder="Enter chapter description">{{ chapter.description }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}

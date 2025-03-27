@@ -42,7 +42,7 @@
         </div>
     </div>
 
-    <!-- Existing Questions Section -->
+
     <div class="card mt-4">
         <div class="card-header">
             <h5 class="card-title mb-0">Manage Questions</h5>
@@ -74,21 +74,27 @@
                                 <ol>
                                     <li>{{ question.option1 }}</li>
                                     <li>{{ question.option2 }}</li>
-                                    {% if question.option3 %}<li>{{ question.option3 }}</li>{% endif %}
-                                    {% if question.option4 %}<li>{{ question.option4 }}</li>{% endif %}
+                                    {% if question.option3 %}
+                                    <li>{{ question.option3 }}</li>
+                                    {% endif %}
+                                    {% if question.option4 %}
+                                    <li>{{ question.option4 }}</li>
+                                    {% endif %}
                                 </ol>
                             </td>
                             <td>Option {{ question.correct_option }}</td>
                             <td>
                                 <div class="btn-group">
                                     <a href="{{ url_for('edit_question', question_id=question.id) }}" 
-                                       class="btn btn-sm btn-outline-primary">
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Edit Question">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form method="POST" 
                                           action="{{ url_for('edit_question', question_id=question.id) }}">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                title="Delete Question"
                                                 onclick="return confirm('Delete this question?')">
                                             <i class="bi bi-trash"></i>
                                         </button>
