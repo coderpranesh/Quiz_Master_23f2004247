@@ -4,6 +4,30 @@
 {% block content %}
 <div class="container-fluid">
     <h2 class="mb-4">Manage Quizzes</h2>
+
+        <!-- Search Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('manage_quizzes') }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" 
+                               name="search" 
+                               placeholder="Search Quiz by name..."
+                               value="{{ search_query }}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </form>
+                {% if search_query %}
+                <div class="mt-2">
+                    <a href="{{ url_for('manage_quizzes') }}" class="text-muted">
+                        Clear search results
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
     
     <div class="row">
         <div class="col-md-4">

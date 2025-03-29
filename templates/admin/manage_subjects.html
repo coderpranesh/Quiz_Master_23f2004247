@@ -33,11 +33,11 @@
     </div>
 
 
-    <div class="card">
-        <div class="card-body">
+    <div class="card shadow">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
                         <tr>
                             <th>Name</th>
                             <th>Description</th>
@@ -48,9 +48,9 @@
                     <tbody>
                         {% for subject in subjects %}
                         <tr>
-                            <td>{{ subject.name }}</td>
+                            <td class="fw-bold">{{ subject.name }}</td>
                             <td>{{ subject.description|truncate(100) }}</td>
-                            <td>{{ subject.created_at|datetimeformat }}</td>
+                            <td class="badge bg-info">{{ subject.created_at|datetimeformat }}</td>
                             <td>
                                 <div class="btn-group">
                                     <button class="btn btn-sm btn-outline-primary" 

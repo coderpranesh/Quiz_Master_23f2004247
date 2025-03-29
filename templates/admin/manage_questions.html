@@ -5,22 +5,6 @@
 <div class="container-fluid">
     <h2 class="mb-4">Manage Questions - {{ quiz.title }}</h2>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="GET" action="{{ url_for('admin_dashboard') }}">
-                <div class="input-group">
-                    <input type="text" class="form-control" 
-                           name="search" 
-                           placeholder="Search users by name or email..."
-                           value="{{ search_query }}">
-                    <button class="btn btn-primary" type="submit">
-                        <i class="bi bi-search"></i> Search
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     
     <div class="row">
         <div class="col-md-4">

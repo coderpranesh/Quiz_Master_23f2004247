@@ -43,7 +43,7 @@ def create_admin():
         db.create_all()
         if not User.query.filter_by(is_admin=True).first():
             admin = User(
-                username='admin@quizmaster.com',
+                username='admin@gmail.com',
                 full_name='Admin User',
                 is_admin=True
             )
