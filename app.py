@@ -350,7 +350,6 @@ def edit_chapter(chapter_id):
     return redirect(url_for('manage_chapters'))
 
 
-
 @app.route('/admin/quizzes', methods=['GET', 'POST'])
 @login_required
 def manage_quizzes():
@@ -360,6 +359,8 @@ def manage_quizzes():
     form = QuizForm()
     form.chapter.choices = [(c.id, f"{c.subject.name} - {c.name}") for c in Chapter.query.join(Subject).all()]
     
+    search_query = request.args.get('search', '')
+
     if form.validate_on_submit():
         quiz = Quiz(
             title=form.title.data,
@@ -370,9 +371,20 @@ def manage_quizzes():
         db.session.commit()
         flash('Quiz created successfully!', 'success')
         return redirect(url_for('manage_quizzes'))
-    
-    quizzes = Quiz.query.all()
-    return render_template('admin/manage_quizzes.html', form=form, quizzes=quizzes)
+
+    # Implement search functionality
+    query = Quiz.query.join(Chapter).join(Subject)
+    if search_query:
+        query = query.filter(db.or_(
+            Quiz.title.ilike(f'%{search_query}%')
+        ))
+
+    quizzes = query.order_by(Quiz.created_at.desc()).all()
+
+    return render_template('admin/manage_quizzes.html',
+                           form=form,
+                           quizzes=quizzes,
+                           search_query=search_query)
 
 @app.route('/admin/questions/<int:quiz_id>', methods=['GET', 'POST'])
 @login_required
@@ -468,14 +480,37 @@ def edit_quiz(quiz_id):
 
 
 # User Routes
+# @app.route('/user/dashboard')
+# @login_required
+# def user_dashboard():
+#     if current_user.is_admin:
+#         return redirect(url_for('admin_dashboard'))
+    
+#     quizzes = Quiz.query.all()
+#     return render_template('user/dashboard.html', quizzes=quizzes)
+
+
 @app.route('/user/dashboard')
 @login_required
 def user_dashboard():
     if current_user.is_admin:
         return redirect(url_for('admin_dashboard'))
     
-    quizzes = Quiz.query.all()
-    return render_template('user/dashboard.html', quizzes=quizzes)
+    search_query = request.args.get('search', '').strip()
+    
+    # Search for quizzes by title, subject, or chapter
+    query = Quiz.query.join(Chapter).join(Subject)
+    if search_query:
+        query = query.filter(db.or_(
+            Quiz.title.ilike(f'%{search_query}%'),
+            Chapter.name.ilike(f'%{search_query}%'),
+            Subject.name.ilike(f'%{search_query}%')
+        ))
+    
+    quizzes = query.order_by(Quiz.created_at.desc()).all()
+
+    return render_template('user/dashboard.html', quizzes=quizzes, search_query=search_query)
+
 
 
 @app.route('/user/quiz/<int:quiz_id>', methods=['GET', 'POST'])
