@@ -459,7 +459,6 @@ def edit_quiz(quiz_id):
     quiz = Quiz.query.get_or_404(quiz_id)
     form = QuizForm(obj=quiz)
     
-    # Populate chapter choices
     form.chapter.choices = [(c.id, f"{c.subject.name} - {c.name}") 
                           for c in Chapter.query.join(Subject).all()]
     
@@ -477,17 +476,6 @@ def edit_quiz(quiz_id):
                          form=form, 
                          quiz=quiz)
 
-
-
-# User Routes
-# @app.route('/user/dashboard')
-# @login_required
-# def user_dashboard():
-#     if current_user.is_admin:
-#         return redirect(url_for('admin_dashboard'))
-    
-#     quizzes = Quiz.query.all()
-#     return render_template('user/dashboard.html', quizzes=quizzes)
 
 
 @app.route('/user/dashboard')
